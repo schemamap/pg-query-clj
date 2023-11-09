@@ -6,14 +6,6 @@
    [tech.v3.datatype.struct :as dt-struct])
   (:import [tech.v3.datatype.ffi Pointer]))
 
-(defn int-type
-  []
-  (if (= (ffi-size-t/size-t-size) 8)
-    :int64
-    :int32))
-
-(defonce int-type* (delay (int-type)))
-
 (defonce ptr-dtype* (delay (ffi-size-t/ptr-t-type)))
 
 (defonce pg-query-error-def*
@@ -25,9 +17,9 @@
             {:name :filename
              :datatype @ptr-dtype*}
             {:name :lineno
-             :datatype :int32} ;; FIXME int
+             :datatype :int32}
             {:name :cursorpos
-             :datatype :int32} ;; FIXME int
+             :datatype :int32}
             {:name :context
              :datatype @ptr-dtype*}])))
 
@@ -46,12 +38,7 @@
 
 (dt-ffi/define-library!
   lib
-  '{
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    ;; Database setup/teardown
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-    :pg_query_parse {:rettype (by-value :pg-query-parse-result)
+  '{:pg_query_parse {:rettype (by-value :pg-query-parse-result)
                      :argtypes [[input :pointer]]}}
   nil
   nil)
@@ -103,7 +90,7 @@
   (let [char (dt-ffi/string->c query)
         result-ptr (pg_query_parse char)
         result (ptr->result result-ptr)
-        json (j/read-value (:parse-tree result))]
+        json (some-> result :parse-tree j/read-value)]
     (assoc result :json json)))
 
 (comment
