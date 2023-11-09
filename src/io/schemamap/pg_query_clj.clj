@@ -1,7 +1,16 @@
 (ns io.schemamap.pg-query-clj
   (:require [tech.v3.datatype.ffi :as dt-ffi]
             [tech.v3.datatype.ffi.size-t :as ffi-size-t]
-            [tech.v3.datatype.struct :as dt-struct]))
+            [tech.v3.datatype.struct :as dt-struct])
+  (:import [tech.v3.datatype.ffi Pointer]))
+
+(defn int-type
+  []
+  (if (= (ffi-size-t/size-t-size) 8)
+    :int64
+    :int32))
+
+(defonce int-type* (delay (int-type)))
 
 (defonce ptr-dtype* (delay (ffi-size-t/ptr-t-type)))
 
@@ -14,9 +23,9 @@
             {:name :filename
              :datatype @ptr-dtype*}
             {:name :lineno
-             :datatype :int64} ;; FIXME int
+             :datatype :int32} ;; FIXME int
             {:name :cursorpos
-             :datatype :int64} ;; FIXME int
+             :datatype :int32} ;; FIXME int
             {:name :context
              :datatype @ptr-dtype*}])))
 
@@ -62,16 +71,46 @@
              (dt-ffi/library-singleton-set! lib (lib-path)))
            true)))
 
-(defn parse [query]
-  (let [char (dt-ffi/string->c query)]
-    char))
+(defn ->pointer [uint]
+  (Pointer. uint))
 
-(defn foo []
-  ;; (pg_query_parse "SELECT 1;")
-  (initialize!)
-  )
+(defn ptr->string [uint]
+  (-> (->pointer uint)
+      (dt-ffi/c->string)))
+
+(defn ptr->error [uint]
+  (let [data-type (:datatype-name @pg-query-error-def*)
+        ptr (->pointer uint)
+        {:keys [message funcname filename lineno cursorpos context]} (dt-ffi/ptr->struct data-type ptr)]
+    {:message (ptr->string message)
+     :funcname (ptr->string funcname)
+     :filename (ptr->string filename)
+     :lineno lineno
+     :cursorpos cursorpos
+     :context (ptr->string context)}))
+
+(defn ptr->result [ptr]
+  (let [data-type (:datatype-name @pg-query-parse-result-def*)
+        {:keys [parse_tree stderr_buffer error]} (dt-ffi/ptr->struct data-type ptr)]
+    {:parse-tree (ptr->string parse_tree)
+     :stderr-buffer (ptr->string stderr_buffer)
+     :error (when-not (= error 0)
+              (ptr->error error))}))
+
+(defn parse [query]
+  (let [char (dt-ffi/string->c query)
+        result-ptr (pg_query_parse char)]
+    (ptr->result result-ptr)))
 
 (comment
-  (foo)
-  ;; (parse "SELECT 1;")
+  (initialize!)
+
+  (dt-ffi/c->string (dt-ffi/string->c "SELECT 1;"))
+
+  (pg_query_parse (dt-ffi/string->c "SELECT 1;"))
+
+  (parse "SELECT foo, bar FROM foobar WHERE bar = 'BAR' LIMIT 1;")
+
+  (parse "  x-SELECT 1;")
+
   )
