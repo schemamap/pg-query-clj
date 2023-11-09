@@ -1,7 +1,9 @@
 (ns io.schemamap.pg-query-clj
-  (:require [tech.v3.datatype.ffi :as dt-ffi]
-            [tech.v3.datatype.ffi.size-t :as ffi-size-t]
-            [tech.v3.datatype.struct :as dt-struct])
+  (:require
+   [jsonista.core :as j]
+   [tech.v3.datatype.ffi :as dt-ffi]
+   [tech.v3.datatype.ffi.size-t :as ffi-size-t]
+   [tech.v3.datatype.struct :as dt-struct])
   (:import [tech.v3.datatype.ffi Pointer]))
 
 (defn int-type
@@ -99,8 +101,10 @@
 
 (defn parse [query]
   (let [char (dt-ffi/string->c query)
-        result-ptr (pg_query_parse char)]
-    (ptr->result result-ptr)))
+        result-ptr (pg_query_parse char)
+        result (ptr->result result-ptr)
+        json (j/read-value (:parse-tree result))]
+    (assoc result :json json)))
 
 (comment
   (initialize!)
@@ -111,6 +115,7 @@
 
   (parse "SELECT foo, bar FROM foobar WHERE bar = 'BAR' LIMIT 1;")
 
-  (parse "  x-SELECT 1;")
+  (parse "SELECT 1;")
 
+  (parse "x-SELECT 1;")
   )
