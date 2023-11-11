@@ -4,9 +4,8 @@
             [deps-deploy.deps-deploy :as dd]))
 
 (def lib 'io.schemamap/pg-query-clj)
-(def version "0.1.0-SNAPSHOT")
-#_ ; alternatively, use MAJOR.MINOR.COMMITS:
-(def version (format "1.0.%s" (b/git-count-revs nil)))
+; use MAJOR.MINOR.COMMITS:
+(def version (format "0.0.%s" (b/git-count-revs nil)))
 (def class-dir "target/classes")
 
 (defn test "Run all the tests." [opts]
@@ -20,15 +19,17 @@
   opts)
 
 (defn- pom-template [version]
-  [[:description "FIXME: my new library."]
+  [[:description "Clojure library to parse, deparse and normalize SQL queries using the PostgreSQL query parser"]
    [:url "https://github.com/io.schemamap/pg-query-clj"]
    [:licenses
     [:license
-     [:name "Eclipse Public License"]
-     [:url "http://www.eclipse.org/legal/epl-v10.html"]]]
+     [:name "MIT license"]
+     [:url "https://github.com/schemamap/pg-query-clj/blob/main/LICENSE"]]]
    [:developers
     [:developer
-     [:name "Ikaraszi"]]]
+     [:name "Istvan Karaszi"]]
+    [:developer
+     [:name "Krisztian Szabo"]]]
    [:scm
     [:url "https://github.com/io.schemamap/pg-query-clj"]
     [:connection "scm:git:https://github.com/io.schemamap/pg-query-clj.git"]
@@ -52,7 +53,7 @@
     (println "\nWriting pom.xml...")
     (b/write-pom opts)
     (println "\nCopying source...")
-    (b/copy-dir {:src-dirs ["resources" "src"] :target-dir class-dir})
+    (b/copy-dir {:src-dirs ["resources" "src" "lib"] :target-dir class-dir})
     (println "\nBuilding JAR..." (:jar-file opts))
     (b/jar opts))
   opts)

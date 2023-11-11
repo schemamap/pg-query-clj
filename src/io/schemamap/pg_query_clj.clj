@@ -1,104 +1,34 @@
 (ns io.schemamap.pg-query-clj
   (:require
    [jsonista.core :as j]
-   [tech.v3.datatype.ffi :as dt-ffi]
-   [tech.v3.datatype.ffi.size-t :as ffi-size-t]
-   [tech.v3.datatype.struct :as dt-struct])
-  (:import [tech.v3.datatype.ffi Pointer]))
+   [io.schemamap.pg-query-clj.ffi :as ffi]))
 
-(defonce ptr-dtype* (delay (ffi-size-t/ptr-t-type)))
+(defn initialize!
+  ([] (initialize! {}))
+  ([{:keys [lib-path]
+     :as   init-config}]
+   (ffi/initialize! init-config)))
 
-(defonce pg-query-error-def*
-  (delay (dt-struct/define-datatype! :pg-query-error
-           [{:name :message
-             :datatype @ptr-dtype*}
-            {:name :funcname
-             :datatype @ptr-dtype*}
-            {:name :filename
-             :datatype @ptr-dtype*}
-            {:name :lineno
-             :datatype :int32}
-            {:name :cursorpos
-             :datatype :int32}
-            {:name :context
-             :datatype @ptr-dtype*}])))
+(def default-json-object-mapper
+  (j/object-mapper {:decode-key-fn true}))
 
-(defonce pg-query-parse-result-def*
-  (delay (dt-struct/define-datatype! :pg-query-parse-result
-           [{:name :parse_tree
-             :datatype @ptr-dtype*}
-            {:name :stderr_buffer
-             :datatype @ptr-dtype*}
-            {:name :error
-             :datatype @ptr-dtype*}])))
-
-(defn define-datatypes! []
-  @pg-query-error-def*
-  @pg-query-parse-result-def*)
-
-(dt-ffi/define-library!
-  lib
-  '{:pg_query_parse {:rettype (by-value :pg-query-parse-result)
-                     :argtypes [[input :pointer]]}}
-  nil
-  nil)
-
-(defonce ^:private initialize* (atom false))
-
-(defn initialized?
-  []
-  @initialize*)
-
-(defn lib-path []
-  "/darwin-aarch64/libpg_query/libpg_query.dylib")
-
-(defn initialize! []
-  (swap! initialize*
-         (fn [is-init?]
-           (when-not is-init?
-             (define-datatypes!)
-             (dt-ffi/library-singleton-set! lib (lib-path)))
-           true)))
-
-(defn ->pointer [uint]
-  (Pointer. uint))
-
-(defn ptr->string [uint]
-  (-> (->pointer uint)
-      (dt-ffi/c->string)))
-
-(defn ptr->error [uint]
-  (let [data-type (:datatype-name @pg-query-error-def*)
-        ptr (->pointer uint)
-        {:keys [message funcname filename lineno cursorpos context]} (dt-ffi/ptr->struct data-type ptr)]
-    {:message (ptr->string message)
-     :funcname (ptr->string funcname)
-     :filename (ptr->string filename)
-     :lineno lineno
-     :cursorpos cursorpos
-     :context (ptr->string context)}))
-
-(defn ptr->result [ptr]
-  (let [data-type (:datatype-name @pg-query-parse-result-def*)
-        {:keys [parse_tree stderr_buffer error]} (dt-ffi/ptr->struct data-type ptr)]
-    {:parse-tree (ptr->string parse_tree)
-     :stderr-buffer (ptr->string stderr_buffer)
-     :error (when-not (= error 0)
-              (ptr->error error))}))
-
-(defn parse [query]
-  (let [char (dt-ffi/string->c query)
-        result-ptr (pg_query_parse char)
-        result (ptr->result result-ptr)
-        json (some-> result :parse-tree j/read-value)]
-    (assoc result :json json)))
+(defn parse
+  ([^String query]
+   (parse query default-json-object-mapper))
+  ([^String query json-object-mapper]
+   (let [result (ffi/pg-query-parse query)
+         json   (some-> result
+                        :parse-tree
+                        (j/read-value json-object-mapper))]
+     (assoc result :parse-tree-edn json))))
 
 (comment
-  (initialize!)
+  ; https://github.com/java-native-access/jna/blob/a4aca64973061cf7d6c9c21e031683340c674e92/src/com/sun/jna/NativeLibrary.java#L74-L81
+  (initialize! {} #_{:lib-path "/darwin-aarch64/libpg_query.dylib"})
 
-  (dt-ffi/c->string (dt-ffi/string->c "SELECT 1;"))
-
-  (pg_query_parse (dt-ffi/string->c "SELECT 1;"))
+  (do
+    (System/setProperty "jna.debug_load" "true")
+    (System/setProperty "jna.debug_load.jna" "true"))
 
   (parse "SELECT foo, bar FROM foobar WHERE bar = 'BAR' LIMIT 1;")
 

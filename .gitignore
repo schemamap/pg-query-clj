@@ -26,3 +26,7 @@
 /checkouts
 /classes
 /target
+.direnv/
+result*
+# symlinked in by the Nix flake
+lib
