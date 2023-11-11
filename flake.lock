@@ -7,15 +7,15 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1695760857,
-        "narHash": "sha256-cVKY2YyI/hKM+muWRtE8yuw+hXyGupv4OtvQJaDS7rk=",
-        "owner": "jlesquembre",
+        "lastModified": 1699710300,
+        "narHash": "sha256-6My4VN+8I8GBvV3oJqbUNHX47av4GzjXElwZTa5Pg0U=",
+        "owner": "thenonameguy",
         "repo": "clj-nix",
-        "rev": "51caf63bfac477f98450694141dbc894b0a27614",
+        "rev": "743e60c127a85276c67414330ba83bf07c1f0c4d",
         "type": "github"
       },
       "original": {
-        "owner": "jlesquembre",
+        "owner": "thenonameguy",
         "repo": "clj-nix",
         "type": "github"
       }
