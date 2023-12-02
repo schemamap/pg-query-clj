@@ -8,7 +8,7 @@ pkgs.stdenv.mkDerivation rec {
     owner = "pganalyze";
     repo = "libpg_query";
     rev = version;
-    sha256 = "sha256-iS+/SED1suxIg0tpE52M6hV9+hlSOG3MYZDbHR/wn50=";
+    sha256 = "sha256-/HUg6x0il5WxENmgR3slu7nmXTKv6YscjpX569Dztko=";
   };
 
   nativeBuildInputs = [ gnumake gcc ]

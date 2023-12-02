@@ -16,7 +16,9 @@
         # Simulating JNA Platform#getNativeLibraryResourcePrefix()
         # Flip arch-os from Nix to os-arch
         system-parts = pkgs.lib.splitString "-" pkgs.system;
-        os-arch-prefix = builtins.concatStringsSep "-" (pkgs.lib.reverseList system-parts);
+        os-arch-prefix-underscores = builtins.concatStringsSep "-" (pkgs.lib.reverseList system-parts);
+        # NOTE: ^ this contains x86_64, have to fix to be equivalent to JNA
+        os-arch-prefix = builtins.replaceStrings ["_"] ["-"] os-arch-prefix-underscores;
         lib-folder = "./lib/${os-arch-prefix}";
         # Definining a reusable DLL providing script, used for Nix repeatable build AND direnv shell entering (development)
         postPatch = ''
