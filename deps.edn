@@ -1,8 +1,8 @@
 {:paths ["src" "resources" "lib"]
- :deps {org.clojure/clojure {:mvn/version "1.11.1"}
+ :deps {org.clojure/clojure {:mvn/version "1.12.0"}
         cnuernber/dtype-next {:mvn/version "10.011"}
         net.java.dev.jna/jna {:mvn/version "5.13.0"}
-        metosin/jsonista {:mvn/version "0.3.8"}
+        metosin/jsonista {:mvn/version "0.3.11"}
         ;; techascent/tech.jna {:mvn/version "4.06"}
         }
  :aliases

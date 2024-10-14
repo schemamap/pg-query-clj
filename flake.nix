@@ -2,7 +2,7 @@
   description = "pg-query-clj - Clojure library to parse, deparse and normalize SQL queries using the PostgreSQL query parser";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.05";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
     clj-nix.url = "github:jlesquembre/clj-nix";
   };
@@ -12,7 +12,7 @@
       let
         pkgs = nixpkgs.legacyPackages.${system};
         cljpkgs = clj-nix.packages.${system};
-        libpg-query-15 = pkgs.callPackage ./nix/libpg_query.nix { };
+        libpg-query-16 = pkgs.callPackage ./nix/libpg_query.nix { };
         # Simulating JNA Platform#getNativeLibraryResourcePrefix()
         # Flip arch-os from Nix to os-arch
         system-parts = pkgs.lib.splitString "-" pkgs.system;
@@ -23,15 +23,15 @@
         # Definining a reusable DLL providing script, used for Nix repeatable build AND direnv shell entering (development)
         postPatch = ''
           mkdir -p ${lib-folder}
-          ln -sf ${libpg-query-15}/lib/* ${lib-folder}
+          ln -sf ${libpg-query-16}/lib/* ${lib-folder}
         '';
       in
       {
 
         packages = {
-          inherit libpg-query-15;
+          inherit libpg-query-16;
           default =
-            let version = "0.15.0";
+            let version = "0.16.0";
             in
             cljpkgs.mkCljLib
               {
